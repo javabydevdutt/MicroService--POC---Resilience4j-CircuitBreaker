@@ -1,0 +1,45 @@
+CircuitBreaker Configuration details with complete description
+=================================================================
+In restController GetMapping method:-
+---------------------------------------
+
+@GetMapping("/getInvoice")
+@CircuitBreaker(name = "getInvoiceCB", fallbackMethod = "getInvoiceFallBack")
+    public String getInvoice() {
+	logger.info("getInvoice() call starts here");
+	ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:8888/invoice/rest/find/2",
+				String.class);
+	logger.info("Response:- " + response.getStatusCode());
+	return response.getBody();
+  }
+
+#configure circuit breaker configuration details
+resilience4j.circuitbreaker.instances.getInvoiceCB.failure-rate-threshold=80
+resilience4j.circuitbreaker.instances.getInvoiceCB.sliding-window-size=10
+resilience4j.circuitbreaker.instances.getInvoiceCB.sliding-window-type=count-based
+resilience4j.circuitbreaker.instances.getInvoiceCB.minimum-number-of-calls=5
+resilience4j.circuitbreaker.instances.getInvoiceCB.automatic-transition-from-open-to-half-open-enabled=true
+resilience4j.circuitbreaker.instances.getInvoiceCB.permitted-number-of-calls-in-half-open-state=4
+resilience4j.circuitbreaker.instances.getInvoiceCB.wait-duration-in-open-state=1s
+
+
+1) failure-rate-threshold=80
+        -indicates that if 80% of requests are getting failed, open the circuit ie. Make the Circuit Breaker state as Open.
+
+2) sliding-window-size=10
+        -indicates that if 80% of requests out of 10 (it means 8) are failing, open the circuit.
+
+3) sliding-window-type=COUNT_BASED 
+        - indicates that we are using COUNT_BASED sliding window. Another type is TIME_BASED.
+
+4) minimum-number-of-calls=5
+        - indicates that we need at least 5 calls to calculate the failure rate threshold.
+
+5) automatic-transition-from-open-to-half-open-enabled=true
+        - indicates that don’t switch directly from the open state to the closed state, consider the half-open state also.
+
+6) permitted-number-of-calls-in-half-open-state=4
+        -indicates that when on half-open state, consider sending 4 requests. If 80% of them are failing, switch circuit breaker to open state.
+
+7) wait-duration-in-open-state=1s
+        -indicates the waiting time interval while switching from the open state to the closed state.
